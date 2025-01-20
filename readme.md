@@ -1,26 +1,28 @@
 # ZapTasks
 
-ZapTasks is a modern, user-friendly command execution tool, designed as an alternative to Cron. It simplifies task configuration, execution, and tracking, all while offering a clean interface and seamless integration into macOS.
+![ZapTasks Logo](./logo/AppIconsDock/zaptasks_64.png)
 
-ZapTasks is built in Swift, delivering a native experience for Mac users, and leverages "Shaas" (Shell as a Service) to execute shell commands.
+**ZapTasks** is a modern, user-friendly command execution tool, designed as an alternative to Cron. It simplifies task configuration, execution, and tracking, all while offering a clean interface and seamless integration into macOS.
+
+ZapTasks is built in **Swift**, delivering a native experience for Mac users, and leverages "Shaas" (Shell as a Service) to execute shell commands.
 
 ## Features
 
-* User-Friendly Interface: Configure and manage tasks with ease through a Mac application and menu bar interface.
-* Task Execution History: View and track previously executed tasks.
-* Notifications: Stay informed with alerts when tasks are executed or completed.
-* Mac Integration: Operates smoothly as a Mac menu bar app and standalone application.
-* Shell executing: Executes commands efficiently using the powerful Shaas binary "Shell as a Service."
+* **User-Friendly Interface**: Configure and manage tasks with ease through a Mac application and menu bar interface.
+* **Task Execution History**: View and track previously executed tasks.
+* **Notifications**: Stay informed with alerts when tasks are executed or completed.
+* **Mac Integration**: Operates smoothly as a Mac menu bar app and standalone application.
+* **Shell executing**: Executes commands efficiently using the powerful Shaas binary "Shell as a Service."
 
 ## Getting Started
 
 ### Installation Steps
 
-1. Install ZapTasks
+1. **Install ZapTasks**
 
 Download and install the ZapTasks app on your Mac.
 
-2. Start Shaas
+2. **Start Shaas**
 
 Navigate to the directory containing shaas and run the following command:
 
@@ -28,7 +30,7 @@ Navigate to the directory containing shaas and run the following command:
 ./shaas
 ```
 
-3. Launch ZapTasks
+3. **Launch ZapTasks**
 
 Open the ZapTasks app to start configuring and managing your tasks.
 
