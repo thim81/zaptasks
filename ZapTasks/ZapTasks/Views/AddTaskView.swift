@@ -232,26 +232,24 @@ struct AddTaskView: View {
         var scheduleDisplay: String = "Not Scheduled"
         var schedule: [String: Any] = ["type": interval.rawValue]
         
-        if isScheduled {
-            switch interval {
-            case .daily:
-                scheduleDisplay = "Daily at \(formattedTime(dailyTime))"
-                schedule["time"] = formattedTime(dailyTime)
-            case .hourly:
-                scheduleDisplay = "Hourly at minute \(hourlyMinute)"
-                schedule["minute"] = hourlyMinute
-            case .weekly:
-                scheduleDisplay = "Weekly on \(Calendar.current.weekdaySymbols[weeklyDay]) at \(formattedTime(weeklyTime))"
-                schedule["day"] = Calendar.current.weekdaySymbols[weeklyDay]
-                schedule["time"] = formattedTime(weeklyTime)
-            case .monthly:
-                scheduleDisplay = "Monthly on day \(monthlyDay) at \(formattedTime(monthlyTime))"
-                schedule["day"] = monthlyDay
-                schedule["time"] = formattedTime(monthlyTime)
-            case .customMinutes:
-                scheduleDisplay = "Every \(customMinutes) minutes"
-                schedule["intervalMinutes"] = customMinutes
-            }
+        switch interval {
+        case .daily:
+            scheduleDisplay = "Daily at \(formattedTime(dailyTime))"
+            schedule["time"] = formattedTime(dailyTime)
+        case .hourly:
+            scheduleDisplay = "Hourly at minute \(hourlyMinute)"
+            schedule["minute"] = hourlyMinute
+        case .weekly:
+            scheduleDisplay = "Weekly on \(Calendar.current.weekdaySymbols[weeklyDay]) at \(formattedTime(weeklyTime))"
+            schedule["day"] = Calendar.current.weekdaySymbols[weeklyDay]
+            schedule["time"] = formattedTime(weeklyTime)
+        case .monthly:
+            scheduleDisplay = "Monthly on day \(monthlyDay) at \(formattedTime(monthlyTime))"
+            schedule["day"] = monthlyDay
+            schedule["time"] = formattedTime(monthlyTime)
+        case .customMinutes:
+            scheduleDisplay = "Every \(customMinutes) minutes"
+            schedule["intervalMinutes"] = customMinutes
         }
         
         let scheduleJSON = try? JSONSerialization.data(withJSONObject: schedule, options: [])
