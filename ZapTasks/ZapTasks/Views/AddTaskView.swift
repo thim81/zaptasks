@@ -42,43 +42,50 @@ struct AddTaskView: View {
             // Task Name
             HStack {
                 Text("Name:")
-                    .frame(width: 100, alignment: .trailing)
+                    .frame(width: 150, alignment: .trailing)
                 TextField("Enter task name", text: $name)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(maxWidth: .infinity)
             }
             
+            // Task Command
+            HStack {
+                Text("Command:")
+                    .frame(width: 150, alignment: .trailing)
+                TextField("Enter command", text: $command)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .frame(maxWidth: .infinity)
+                Button("Choose File") {
+                    chooseCommandFile()
+                }
+            }
+            
             // Working Directory Picker
             HStack {
                 Text("Working Directory:")
-                    .frame(width: 100, alignment: .trailing)
+                    .frame(width: 150, alignment: .trailing)
                 TextField("Select directory", text: $workingDirectory)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(maxWidth: .infinity)
-                Button("Choose...") {
+                Button("Choose Folder") {
                     chooseWorkingDirectory()
                 }
             }
             
-            // Task Command
-            HStack {
-                Text("Command:")
-                    .frame(width: 100, alignment: .trailing)
-                TextField("Enter command", text: $command)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(maxWidth: .infinity)
-            }
-            
             // Toggle for Scheduling
-            Toggle("Enable Scheduling", isOn: $isScheduled)
-                .toggleStyle(SwitchToggleStyle())
+            HStack {
+                Text("Enable Scheduling:")
+                    .frame(width: 150, alignment: .trailing)
+                Toggle("", isOn: $isScheduled)
+                    .toggleStyle(SwitchToggleStyle())
+            }
             
             // Interval Picker and Options (conditionally shown)
             if isScheduled {
                 // Interval Picker
                 HStack {
                     Text("Interval:")
-                        .frame(width: 100, alignment: .trailing)
+                        .frame(width: 150, alignment: .trailing)
                     Picker("", selection: $interval) {
                         ForEach(TaskInterval.allCases, id: \.self) { interval in
                             if interval == .customMinutes {
@@ -96,14 +103,14 @@ struct AddTaskView: View {
                 if interval == .daily {
                     HStack {
                         Text("Time:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         DatePicker("Select Time", selection: $dailyTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                     }
                 } else if interval == .hourly {
                     HStack {
                         Text("Minute:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         Picker("", selection: $hourlyMinute) {
                             ForEach(0..<60, id: \.self) { minute in
                                 Text("\(minute)")
@@ -114,7 +121,7 @@ struct AddTaskView: View {
                 } else if interval == .weekly {
                     HStack {
                         Text("Day:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         Picker("", selection: $weeklyDay) {
                             ForEach(0..<7, id: \.self) { index in
                                 let mondayStartIndex = (index + 1) % 7
@@ -125,14 +132,14 @@ struct AddTaskView: View {
                     }
                     HStack {
                         Text("Time:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         DatePicker("Select Time", selection: $weeklyTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                     }
                 } else if interval == .monthly {
                     HStack {
                         Text("Day:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         Picker("", selection: $monthlyDay) {
                             ForEach(1...31, id: \.self) { day in
                                 Text("\(day)")
@@ -142,14 +149,14 @@ struct AddTaskView: View {
                     }
                     HStack {
                         Text("Time:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         DatePicker("Select Time", selection: $monthlyTime, displayedComponents: .hourAndMinute)
                             .labelsHidden()
                     }
                 } else if interval == .customMinutes {
                     HStack {
                         Text("Every:")
-                            .frame(width: 100, alignment: .trailing)
+                            .frame(width: 150, alignment: .trailing)
                         Stepper(value: $customMinutes, in: 1...1440) {
                             Text("\(customMinutes) minutes")
                         }
@@ -170,6 +177,7 @@ struct AddTaskView: View {
             .keyboardShortcut(.defaultAction)
         }
         .padding()
+        .frame(minWidth: 300, maxWidth: .infinity, minHeight: 300, alignment: .center)
         .onAppear {
             if let task = task {
                 name = task.name
@@ -215,6 +223,20 @@ struct AddTaskView: View {
             }
         }
         
+    }
+    
+    private func chooseCommandFile() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+        
+        if panel.runModal() == .OK, let selectedFile = panel.url {
+            // Extract the file name
+            command = selectedFile.lastPathComponent
+            // Extract the directory path
+            workingDirectory = selectedFile.deletingLastPathComponent().path
+        }
     }
     
     private func chooseWorkingDirectory() {

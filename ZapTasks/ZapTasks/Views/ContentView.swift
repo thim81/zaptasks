@@ -86,6 +86,7 @@ struct ContentView: View {
         }
         .sheet(isPresented: $showAddEditSheet) {
             AddTaskView(task: $editingTask)
+            .frame(minWidth: 600, idealWidth: 700)
         }
         .sheet(isPresented: $showExecutionRecords) {
             ExecutionRecordsView()
