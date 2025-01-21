@@ -179,14 +179,17 @@ struct TaskDetailsView: View {
             }
             .padding()
         }
-        .navigationTitle("Tasks")
+        .navigationTitle("ZapTasks")
         .toolbar {
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItem(placement: .automatic) {
+                Spacer() // Pushes the items to the right
+            }
+            ToolbarItem(placement: .automatic) {
                 Button(action: { showExecutionRecords = true }) {
                     Label("View Execution Records", systemImage: "list.bullet")
                 }
             }
-            ToolbarItem(placement: .primaryAction) {
+            ToolbarItem(placement: .automatic) {
                 Button(action: {
                     editingTask = nil // Reset editingTask
                     showAddEditSheet = true
