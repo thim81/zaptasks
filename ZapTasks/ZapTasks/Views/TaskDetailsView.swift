@@ -13,6 +13,11 @@ struct TaskDetailsView: View {
     @Environment(\.modelContext) private var context
     @State private var showDeleteConfirmation = false
     @State private var selectedExecution: ExecutionRecord?
+    
+    @Binding var showExecutionRecords: Bool
+    @Binding var editingTask: TaskItem?
+    @Binding var showAddEditSheet: Bool
+    
     private let executor: TaskExecutor
     private let scheduler: TaskScheduler
     
@@ -23,12 +28,18 @@ struct TaskDetailsView: View {
          onEdit: @escaping () -> Void,
          onDelete: @escaping (TaskItem) -> Void,
          executor: TaskExecutor,
-         scheduler: TaskScheduler) {
+         scheduler: TaskScheduler,
+         showExecutionRecords: Binding<Bool>,
+         editingTask: Binding<TaskItem?>,
+         showAddEditSheet: Binding<Bool>) {
         self._task = Bindable(task)
         self.onEdit = onEdit
         self.onDelete = onDelete
         self.executor = executor
         self.scheduler = scheduler
+        self._showExecutionRecords = showExecutionRecords
+        self._editingTask = editingTask
+        self._showAddEditSheet = showAddEditSheet
     }
     
     var body: some View {
@@ -60,12 +71,12 @@ struct TaskDetailsView: View {
                                 .font(.subheadline)
                             Spacer()
                         }
-
+                        
                         // Edit and Delete Buttons
                         HStack(spacing: 16) {
                             Button("Edit Task", action: onEdit)
                                 .buttonStyle(.bordered)
-
+                            
                             Button("Delete Task") {
                                 showDeleteConfirmation = true
                             }
@@ -81,7 +92,7 @@ struct TaskDetailsView: View {
                         }
                     }
                     Spacer()
-
+                    
                     // Run Button
                     Button(action: { executor.execute(task: task) }) {
                         HStack(spacing: 4) {
@@ -91,7 +102,7 @@ struct TaskDetailsView: View {
                     }
                     .buttonStyle(.borderedProminent)
                 }
-
+                
                 Divider()
                 
                 // Task Details in Two Columns
@@ -123,7 +134,7 @@ struct TaskDetailsView: View {
                                 Text(task.executionRecords.max(by: { $0.date < $1.date })?.date.formatted() ?? "Never")
                                     .font(.subheadline)
                                     .frame(width: 150, alignment: .leading)
-//                                Spacer()
+                                //                                Spacer()
                                 Text("Next Run:")
                                     .bold()
                                     .frame(width: 150, alignment: .leading)
@@ -136,7 +147,7 @@ struct TaskDetailsView: View {
                                 }
                             }
                         }
-
+                        
                     }
                 }
                 
@@ -168,6 +179,22 @@ struct TaskDetailsView: View {
             }
             .padding()
         }
+        .navigationTitle("Tasks")
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: { showExecutionRecords = true }) {
+                    Label("View Execution Records", systemImage: "list.bullet")
+                }
+            }
+            ToolbarItem(placement: .primaryAction) {
+                Button(action: {
+                    editingTask = nil // Reset editingTask
+                    showAddEditSheet = true
+                }) {
+                    Label("Add Task", systemImage: "plus")
+                }
+            }
+        }
         .sheet(item: $selectedExecution) { execution in
             ExecutionDetailView(execution: execution) {
                 selectedExecution = nil
@@ -182,7 +209,7 @@ struct TaskDetailsView: View {
             print("Failed to save task: \(error)")
         }
     }
-
+    
     private func deleteExecutionRecord(_ record: ExecutionRecord) {
         context.delete(record)
         do {
@@ -228,7 +255,7 @@ struct ExecutionRow: View {
                 Text("Delete")
             }
             Button("Show Output", action: onShowOutput)
-            .buttonStyle(.bordered)
+                .buttonStyle(.bordered)
         }
         .padding(.vertical, 4)
     }
@@ -247,7 +274,7 @@ struct ExecutionDetailView: View {
                 Button("Close", action: onClose)
                     .buttonStyle(.borderedProminent)
             }
-
+            
             // Title
             Text("Execution Output")
                 .font(.title2)
@@ -267,7 +294,7 @@ struct ExecutionDetailView: View {
                         .font(.subheadline)
                 }
             }
-
+            
             // Date Row with Label and Value
             HStack {
                 Text("Date:")
