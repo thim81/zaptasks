@@ -25,6 +25,11 @@ final class TaskScheduler: ObservableObject {
     func start() {
         stop() // Stop any existing timer before starting a new one
         print("TaskScheduler started.")
+        
+        // Handle missed tasks
+        executeMissedTasks()
+        
+        // Start the periodic timer for task execution
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             print("Timer fired at \(Date().formatted())")
             self?.checkServiceHealth()
@@ -69,6 +74,27 @@ final class TaskScheduler: ObservableObject {
                 print("Task \(task.name) is not due yet. Current time: \(now.formatted()). Next run: \(nextRun.formatted())")
             } else {
                 print("Task \(task.name) has an invalid schedule.")
+            }
+        }
+    }
+    
+    func executeMissedTasks() {
+        let now = Date()
+        for task in tasks {
+            // If the task has never been run, assume it was missed
+            guard let lastRan = task.lastRan else {
+                print("Task \(task.name) has never been run. Checking if due...")
+                if let nextRun = calculateNextRun(for: task), nextRun <= now {
+                    print("Missed task \(task.name) is due. Executing...")
+                    executor.execute(task: task)
+                }
+                continue
+            }
+            
+            // If lastRan exists, determine if the task was due since the last run
+            if let nextRun = calculateNextRun(for: task, from: lastRan), nextRun <= now {
+                print("Missed task \(task.name) was due after \(lastRan). Executing now...")
+                executor.execute(task: task)
             }
         }
     }
@@ -140,7 +166,7 @@ final class TaskScheduler: ObservableObject {
         }
     }
     
-    func calculateNextRun(for task: TaskItem) -> Date? {
+    func calculateNextRun(for task: TaskItem, from startDate: Date = Date()) -> Date? {
         guard let schedule = parseSchedule(task.schedule) else { return nil }
         let calendar = Calendar.current
         let now = Date()
@@ -148,25 +174,25 @@ final class TaskScheduler: ObservableObject {
         switch schedule["type"] as? String {
         case "daily":
             guard let time = schedule["time"] as? String else { return nil }
-            return timeToNextDate(time: time, from: now)
+            return timeToNextDate(time: time, from: startDate)
         case "hourly":
             guard let minute = schedule["minute"] as? Int else { return nil }
             let currentMinute = calendar.component(.minute, from: now)
             let minutesToAdd = (minute > currentMinute) ? (minute - currentMinute) : (60 - (currentMinute - minute))
-            return calendar.date(byAdding: .minute, value: minutesToAdd, to: now)
+            return calendar.date(byAdding: .minute, value: minutesToAdd, to: startDate)
         case "weekly":
             guard let day = schedule["day"] as? String,
                   let time = schedule["time"] as? String else { return nil }
-            return timeToNextWeekday(day: day, time: time, from: now)
+            return timeToNextWeekday(day: day, time: time, from: startDate)
         case "monthly":
             guard let day = schedule["day"] as? Int,
                   let time = schedule["time"] as? String else { return nil }
-            return timeToNextMonthly(day: day, time: time, from: now)
+            return timeToNextMonthly(day: day, time: time, from: startDate)
         case "customMinutes":
             guard let intervalMinutes = schedule["intervalMinutes"] as? Int else { return nil }
-            let elapsedMinutes = calendar.component(.minute, from: now) % intervalMinutes
+            let elapsedMinutes = calendar.component(.minute, from: startDate) % intervalMinutes
             let minutesUntilNext = intervalMinutes - elapsedMinutes
-            return now.addingTimeInterval(Double(minutesUntilNext) * 60)
+            return startDate.addingTimeInterval(Double(minutesUntilNext) * 60)
         default:
             return nil
         }
