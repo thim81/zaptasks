@@ -21,7 +21,7 @@ struct ContentView: View {
             // Sidebar: Task List
             List {
                 Section(header: Text("Task List").font(.headline)) {
-                    ForEach(tasks, id: \.id) { task in
+                    ForEach(tasks.sorted { $0.name < $1.name }, id: \.id) { task in
                         NavigationLink(
                             destination: {
                                 let executor = TaskExecutor(context: context)

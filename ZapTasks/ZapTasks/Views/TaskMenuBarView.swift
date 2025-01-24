@@ -27,7 +27,7 @@ struct TaskMenuBarView: View {
                     .font(.subheadline)
                     .foregroundColor(.gray)
             } else {
-                ForEach(tasks) { task in
+                ForEach(tasks.sorted { $0.name < $1.name }) { task in
                     HStack(spacing: 12) {
                         // Run Button
                         Button(action: { runTask(task) }) {
