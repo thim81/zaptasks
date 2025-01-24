@@ -123,9 +123,10 @@ struct AddTaskView: View {
                         Text("Day:")
                             .frame(width: 150, alignment: .trailing)
                         Picker("", selection: $weeklyDay) {
-                            ForEach(0..<7, id: \.self) { index in
-                                let mondayStartIndex = (index + 1) % 7
-                                Text(Calendar.current.weekdaySymbols[mondayStartIndex])
+                            let customOrder = [1, 2, 3, 4, 5, 6, 0] // Monday to Sunday order
+                            ForEach(customOrder, id: \.self) { index in
+//                                let mondayStartIndex = (index + 0) % 7
+                                Text(Calendar.current.weekdaySymbols[index])
                             }
                         }
                         .frame(maxWidth: .infinity)
