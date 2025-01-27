@@ -225,16 +225,27 @@ final class TaskScheduler: ObservableObject {
         // Get the current weekday and calculate days until the next target weekday
         let currentWeekday = calendar.component(.weekday, from: date)
         let targetWeekday = weekdayIndex + 1 // Calendar.weekday is 1-based (Sunday = 1)
-        let daysUntilNext = (targetWeekday >= currentWeekday) ?
+        var daysUntilNext = (targetWeekday >= currentWeekday) ?
         (targetWeekday - currentWeekday) : (7 - (currentWeekday - targetWeekday))
         
         // Calculate the next occurrence of the target weekday at the desired time
-        let nextDate = calendar.date(byAdding: .day, value: daysUntilNext, to: date)!
+        var nextDate = calendar.date(byAdding: .day, value: daysUntilNext, to: date)!
         var nextDateComponents = calendar.dateComponents([.year, .month, .day], from: nextDate)
         nextDateComponents.hour = hour
         nextDateComponents.minute = minute
-        
-        return calendar.date(from: nextDateComponents)
+        nextDate = calendar.date(from: nextDateComponents) ?? nextDate
+
+        // If the calculated nextDate is in the past or matches `date`, move to the next week
+        if nextDate <= date {
+            daysUntilNext += 7
+            nextDate = calendar.date(byAdding: .day, value: daysUntilNext, to: date)!
+            nextDateComponents = calendar.dateComponents([.year, .month, .day], from: nextDate)
+            nextDateComponents.hour = hour
+            nextDateComponents.minute = minute
+            nextDate = calendar.date(from: nextDateComponents) ?? nextDate
+        }
+
+        return nextDate
     }
     
     private func timeToNextMonthly(day: Int, time: String, from date: Date) -> Date? {
