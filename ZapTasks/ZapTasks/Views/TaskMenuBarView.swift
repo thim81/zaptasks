@@ -67,7 +67,7 @@ struct TaskMenuBarView: View {
     func runTask(_ task: TaskItem) {
         Task {
             let executor = TaskExecutor(context: context)
-            executor.execute(task: task)
+            await executor.execute(task: task)
         }
     }
 }

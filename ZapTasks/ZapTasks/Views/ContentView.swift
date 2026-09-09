@@ -11,42 +11,29 @@ import SwiftData
 struct ContentView: View {
     @Query private var tasks: [TaskItem]
     @Environment(\.modelContext) private var context
-    @State private var selectedTask: TaskItem? = nil
+    @State private var selectedTaskID: UUID? = nil
     @State private var showAddEditSheet = false
     @State private var editingTask: TaskItem? = nil
     @State private var showExecutionRecords = false
+
+    private var sortedTasks: [TaskItem] {
+        Self.sortTasks(tasks)
+    }
+
+    private var selectedTask: TaskItem? {
+        guard let selectedTaskID else { return nil }
+        return tasks.first { $0.id == selectedTaskID }
+    }
     
     var body: some View {
         NavigationSplitView {
             // Sidebar: Task List
-            List {
+            List(selection: $selectedTaskID) {
                 Section(header: Text("Task List").font(.headline)) {
-                    ForEach(tasks.sorted { $0.name < $1.name }, id: \.id) { task in
-                        NavigationLink(
-                            destination: {
-                                let executor = TaskExecutor(context: context)
-                                let scheduler = TaskScheduler(context: context)
-                                TaskDetailsView(
-                                    task: task,
-                                    onEdit: {
-                                        editingTask = task
-                                        showAddEditSheet = true
-                                    },
-                                    onDelete: { task in
-                                        deleteTask(task)
-                                    },
-                                    executor: executor,
-                                    scheduler: scheduler,
-                                    showExecutionRecords: $showExecutionRecords,
-                                    editingTask: $editingTask,
-                                    showAddEditSheet: $showAddEditSheet
-                                )
-                            }
-                        ) {
-                            Label(task.name, systemImage: "bolt.horizontal.circle" )
-                                .font(.body)
-                                .tag(task)
-                        }
+                    ForEach(sortedTasks, id: \.id) { task in
+                        Label(task.name, systemImage: "bolt.horizontal.circle")
+                            .font(.body)
+                            .tag(task.id)
                     }
                 }
             }
@@ -79,10 +66,10 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Select the first task when the view appears
-            if selectedTask == nil, let firstTask = tasks.first {
-                selectedTask = firstTask
-            }
+            selectedTaskID = Self.reconciledSelection(current: selectedTaskID, tasks: tasks)
+        }
+        .onChange(of: tasks.map(\.id)) { _, _ in
+            selectedTaskID = Self.reconciledSelection(current: selectedTaskID, tasks: tasks)
         }
         .sheet(isPresented: $showAddEditSheet) {
             AddTaskView(task: $editingTask)
@@ -97,16 +84,32 @@ struct ContentView: View {
     
     private func deleteTask(_ task: TaskItem) {
         print("Deleting task: \(task.name) with \(task.executionRecords.count) execution records.")
+        if selectedTaskID == task.id {
+            selectedTaskID = nil
+        }
+        if editingTask?.id == task.id {
+            editingTask = nil
+        }
         DispatchQueue.main.async {
-            self.selectedTask = nil
+            context.delete(task)
+            do {
+                try context.save()
+                print("Task and related execution records deleted successfully.")
+            } catch {
+                print("Failed to delete task: \(error.localizedDescription)")
+            }
         }
-        context.delete(task)
-        do {
-            try context.save()
-            print("Task and related execution records deleted successfully.")
-        } catch {
-            print("Failed to delete task: \(error.localizedDescription)")
+    }
+
+    static func reconciledSelection(current: UUID?, tasks: [TaskItem]) -> UUID? {
+        if let current, tasks.contains(where: { $0.id == current }) {
+            return current
         }
+        return sortTasks(tasks).first?.id
+    }
+
+    private static func sortTasks(_ tasks: [TaskItem]) -> [TaskItem] {
+        tasks.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 }
 
