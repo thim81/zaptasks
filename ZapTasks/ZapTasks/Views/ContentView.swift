@@ -17,7 +17,7 @@ struct ContentView: View {
     @State private var showExecutionRecords = false
 
     private var sortedTasks: [TaskItem] {
-        tasks.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        Self.sortTasks(tasks)
     }
 
     private var selectedTask: TaskItem? {
@@ -66,16 +66,10 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            // Select the first task when the view appears
-            if selectedTaskID == nil, let firstTask = sortedTasks.first {
-                selectedTaskID = firstTask.id
-            }
+            selectedTaskID = Self.reconciledSelection(current: selectedTaskID, tasks: tasks)
         }
-        .onChange(of: tasks.count) { _, _ in
-            if let selectedTaskID, tasks.contains(where: { $0.id == selectedTaskID }) {
-                return
-            }
-            selectedTaskID = sortedTasks.first?.id
+        .onChange(of: tasks.map(\.id)) { _, _ in
+            selectedTaskID = Self.reconciledSelection(current: selectedTaskID, tasks: tasks)
         }
         .sheet(isPresented: $showAddEditSheet) {
             AddTaskView(task: $editingTask)
@@ -105,6 +99,17 @@ struct ContentView: View {
                 print("Failed to delete task: \(error.localizedDescription)")
             }
         }
+    }
+
+    static func reconciledSelection(current: UUID?, tasks: [TaskItem]) -> UUID? {
+        if let current, tasks.contains(where: { $0.id == current }) {
+            return current
+        }
+        return sortTasks(tasks).first?.id
+    }
+
+    private static func sortTasks(_ tasks: [TaskItem]) -> [TaskItem] {
+        tasks.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
     }
 }
 
