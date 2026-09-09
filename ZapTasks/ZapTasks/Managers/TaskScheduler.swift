@@ -9,6 +9,7 @@ import Foundation
 import SwiftData
 import SwiftUI
 
+@MainActor
 final class TaskScheduler: ObservableObject {
     private var tasks: [TaskItem] = []
     private var timer: Timer?
@@ -33,9 +34,11 @@ final class TaskScheduler: ObservableObject {
 
         // Start the periodic timer for task execution
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
-            print("Timer fired at \(Date().formatted())")
-            self?.checkServiceHealth()
-            self?.executeTasks()
+            Task { @MainActor [weak self] in
+                print("Timer fired at \(Date().formatted())")
+                self?.checkServiceHealth()
+                self?.executeTasks()
+            }
         }
     }
     
@@ -71,7 +74,9 @@ final class TaskScheduler: ObservableObject {
             print("Evaluating task: \(task.name), schedule: \(task.schedule)")
             if isTaskDue(task, at: now) {
                 print("Task \(task.name) is due. Executing...")
-                executor.execute(task: task)
+                Task {
+                    await executor.execute(task: task)
+                }
             } else if let nextRun = calculateNextRun(for: task) {
                 print("Task \(task.name) is not due yet. Current time: \(now.formatted()). Next run: \(nextRun.formatted())")
             } else {
@@ -85,7 +90,9 @@ final class TaskScheduler: ObservableObject {
         for task in tasks {
             if shouldExecuteMissedTask(task, now: now) {
                 print("Missed task \(task.name) should execute now.")
-                executor.execute(task: task)
+                Task {
+                    await executor.execute(task: task)
+                }
             }
         }
     }
@@ -111,20 +118,26 @@ final class TaskScheduler: ObservableObject {
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
-        
-        let task = URLSession.shared.dataTask(with: request) { [weak self] _, response, error in
-            let isHealthy = (response as? HTTPURLResponse)?.statusCode == 200 && error == nil
-            DispatchQueue.main.async {
-                self?.isServiceHealthy = isHealthy
-                if !isHealthy {
-                    NotificationHelper.showNotification(
-                        title: "Service Unavailable",
-                        body: "The task execution service is currently unreachable."
-                    )
-                }
+
+        Task { [weak self] in
+            guard let self else { return }
+
+            let isHealthy: Bool
+            do {
+                let (_, response) = try await URLSession.shared.data(for: request)
+                isHealthy = (response as? HTTPURLResponse)?.statusCode == 200
+            } catch {
+                isHealthy = false
+            }
+
+            self.isServiceHealthy = isHealthy
+            if !isHealthy {
+                NotificationHelper.showNotification(
+                    title: "Service Unavailable",
+                    body: "The task execution service is currently unreachable."
+                )
             }
         }
-        task.resume()
     }
     
     private func parseSchedule(_ schedule: String) -> [String: Any]? {

@@ -94,7 +94,11 @@ struct TaskDetailsView: View {
                     Spacer()
                     
                     // Run Button
-                    Button(action: { executor.execute(task: task) }) {
+                    Button(action: {
+                        Task {
+                            await executor.execute(task: task)
+                        }
+                    }) {
                         HStack(spacing: 4) {
                             Text("Run")
                             Image(systemName: "play.circle.fill")

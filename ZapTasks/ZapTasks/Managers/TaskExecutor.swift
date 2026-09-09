@@ -8,17 +8,20 @@
 import Foundation
 import SwiftData
 
+@MainActor
 final class TaskExecutor {
     private weak var context: ModelContext?
     private let shaasBaseURL = Settings.shared.shaasBaseURL
+    private let session: URLSession
     
-    init(context: ModelContext) {
+    init(context: ModelContext, session: URLSession = .shared) {
         self.context = context
+        self.session = session
         NotificationHelper.requestAuthorization()
     }
     
-    func execute(task: TaskItem) {
-        guard let context = context else {
+    func execute(task: TaskItem) async {
+        guard context != nil else {
             print("Context is no longer valid. Cannot execute task.")
             return
         }
@@ -45,32 +48,26 @@ final class TaskExecutor {
         // Add the command as the request body
         request.httpBody = task.command.data(using: .utf8)
         
-        // Perform the HTTP request
-        let taskExecution = URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("Failed to execute task via SHAAS: \(error.localizedDescription)")
-                self.handleTaskCompletion(task: task, success: false, output: "Error: \(error.localizedDescription)")
-                return
-            }
-            
-            guard let data = data,
-                  let httpResponse = response as? HTTPURLResponse else {
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse else {
                 print("Failed to get a valid response from SHAAS")
-                self.handleTaskCompletion(task: task, success: false, output: "Error: \(error)")
+                handleTaskCompletion(task: task, success: false, output: "Error: Invalid response from SHAAS")
                 return
             }
-            
+
             let output = String(data: data, encoding: .utf8) ?? "Unknown output"
             if httpResponse.statusCode == 200 {
                 print("Task \(task.name) output: \(output)")
-                self.handleTaskCompletion(task: task, success: true, output: output)
+                handleTaskCompletion(task: task, success: true, output: output)
             } else {
                 print("SHAAS returned an error: \(httpResponse.statusCode) - \(output)")
-                self.handleTaskCompletion(task: task, success: false, output: output)
+                handleTaskCompletion(task: task, success: false, output: output)
             }
+        } catch {
+            print("Failed to execute task via SHAAS: \(error.localizedDescription)")
+            handleTaskCompletion(task: task, success: false, output: "Error: \(error.localizedDescription)")
         }
-        
-        taskExecution.resume()
     }
     
     private func handleTaskCompletion(task: TaskItem, success: Bool, output: String) {
