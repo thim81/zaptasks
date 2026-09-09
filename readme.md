@@ -6,6 +6,10 @@
 
 ZapTasks is built in **Swift**, delivering a native experience for Mac users, and leverages "Shaas" (Shell as a Service) to execute shell commands.
 
+![macOS](https://img.shields.io/badge/platform-macOS-lightgrey)
+![Latest Release](https://img.shields.io/github/v/release/trinixlabs/zaptasks?label=Latest%20Release)
+![Total Downloads](https://img.shields.io/github/downloads/trinixlabs/zaptasks/total?label=Total%20Downloads)
+
 ## Features
 
 * **User-Friendly Interface**: Configure and manage tasks with ease through a Mac application and menu bar interface.
